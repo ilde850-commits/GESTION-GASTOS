@@ -31,7 +31,7 @@
             body { background: white; padding: 0; margin: 0; }
             .card { box-shadow: none; padding: 0; margin: 0; }
             .no-print { display: none !important; }
-            .salto-pagina { page-break-before: always; }
+            .salto-pagina { page-break-before: always !important; display: block; clear: both; }
             table { page-break-inside: avoid; }
             .firmas { page-break-inside: avoid; }
         }
@@ -246,15 +246,15 @@
                 
                 <h3>Kilometraje</h3><p><b>KM inicio viaje:</b> ${viaje.km} km</p>${kmHTML}
                 
+                <div class="firmas"><div>COMERCIAL<br><br>__________</div><div>ADMINISTRACIÓN<br><br>__________</div></div>
+
                 <div class="salto-pagina">
-                    <h3>Referencia de Archivos / Tickets</h3>
+                    <h3 style="margin-top: 20px;">Referencia de Archivos / Tickets</h3>
                     <table>
                         <tr><th>Fecha</th><th>Concepto</th><th>Nombre de Archivo Descargado</th><th>Pago</th><th>Importe</th></tr>
                         ${filasDesglose ? filasDesglose : '<tr><td colspan="5">No hay registros</td></tr>'}
                     </table>
                 </div>
-
-                <div class="firmas"><div>COMERCIAL<br><br>__________</div><div>ADMINISTRACIÓN<br><br>__________</div></div>
             </div>`;
         }
 
