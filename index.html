@@ -58,7 +58,6 @@
 
         function iniciarDB() {
             return new Promise((resolve) => {
-                // Sistema de seguridad por tiempo: si en 1.2 segundos no abre, forzamos inicio manual
                 let timeoutSeguridad = setTimeout(() => {
                     console.log("Forzando arranque manual por retraso del navegador.");
                     resolve(false);
@@ -100,7 +99,7 @@
             });
         }
 
-        // --- FUNCIONES INTERNAS CRUD (SOPORTAN CAÍDAS CONTROLADAS) ---
+        // --- FUNCIONES INTERNAS CRUD ---
         function obtenerViajes(activo) {
             return new Promise((resolve) => {
                 if(!db) return resolve([]);
@@ -150,7 +149,6 @@
 
         // --- VISTAS Y PANTALLAS ---
         async function cargarDatos() {
-            // Intentamos iniciar la base de datos
             await iniciarDB();
             viajesGlobales = await obtenerViajes(1);
             pantallaInicio();
@@ -327,8 +325,8 @@
                 <label>Importe (€)</label><input type="number" step="0.01" id="importe">
                 <div id="kmzona" class="oculto"><label>KM actuales del coche</label><input type="number" id="g_km"></div>
                 <label>Observaciones</label><input id="obs">
-                <label>Foto del ticket</label>
-                <input type="file" id="foto" accept="image/*">
+                <label>Foto del ticket / factura</label>
+                <input type="file" id="foto" accept="image/*" capture="environment">
                 <button onclick="dispararGuardado(${viajeId})">Guardar Gasto</button>
             </div>`;
             controlKM();
