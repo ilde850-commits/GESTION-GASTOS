@@ -51,10 +51,10 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log("SW error:", err));
         }
 
-        // --- CONFIGURACIÓN DE INDEXEDDB ---
+        // --- CONFIGURACIÓN DE INDEXEDDB (VERSIÓN CORREGIDA Y MEJORADA) ---
         let db;
         const app = document.getElementById('app');
-        let viajes Globales = []; 
+        let viajesGlobales = []; // Corregido el espacio en blanco accidental
 
         function iniciarDB() {
             return new Promise((resolve, reject) => {
@@ -62,6 +62,7 @@
                 
                 request.onupgradeneeded = function(e) {
                     let database = e.target.result;
+                    
                     if (!database.objectStoreNames.contains("viajes")) {
                         database.createObjectStore("viajes", { keyPath: "id", autoIncrement: true });
                     }
@@ -69,6 +70,7 @@
                         let gStore = database.createObjectStore("gastos", { keyPath: "id", autoIncrement: true });
                         gStore.createIndex("viaje_id", "viaje_id", { unique: false });
                     }
+                    console.log("Tablas inicializadas localmente.");
                 };
 
                 request.onsuccess = function(e) {
@@ -77,7 +79,12 @@
                 };
 
                 request.onerror = function(e) {
-                    reject("Error abriendo Base de Datos local");
+                    console.error("Error de IndexedDB:", e.target.error);
+                    reject("Error abriendo Base de Datos local: " + e.target.error.message);
+                };
+
+                request.onblocked = function() {
+                    alert("La base de datos está bloqueada por otra pestaña abierta. Reinicia la app.");
                 };
             });
         }
@@ -123,7 +130,6 @@
                         resultados.push(cursor.value);
                         cursor.continue();
                     } else {
-                        // Ordenar por fecha descendente (como hacía SQLite)
                         resultados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
                         resolve(resultados);
                     }
@@ -138,7 +144,7 @@
                 viajesGlobales = await obtenerViajes(1);
                 pantallaInicio();
             } catch (error) {
-                app.innerHTML = `<div class="card"><p style="color:red;">${error}</p></div>`;
+                app.innerHTML = `<div class="card"><p style="color:red; font-weight:bold;">${error}</p><button onclick="location.reload()">Reintentar Carga</button></div>`;
             }
         }
 
@@ -223,7 +229,6 @@
             let htmlTickets = "";
             let categoriasTotales = {};
 
-            // Calcular totales agrupados
             gastos.forEach(g => {
                 categoriasTotales[g.concepto] = (categoriasTotales[g.concepto] || 0) + parseFloat(g.importe);
             });
@@ -308,7 +313,7 @@
                 
                 <h3>Kilometraje</h3>
                 <p style="margin:4px 0;"><b>KM inicio viaje:</b> ${viaje.km} km</p>
-                ${kmHTML ? kmHTML : '<p style="color:#777; font-size:13px;">No se registraron km de repostajes.</p>'}
+                ${kmHTML ? kmHTML : '<p style="color:#777; font-size:13px;">No se registraron km de repostajes.</p'}
                 
                 <div class="firmas">
                     <div>COMERCIAL<br><br><br>__________</div>
@@ -447,7 +452,7 @@
                     img.src = event.target.result;
                     img.onload = function () {
                         let canvas = document.createElement('canvas');
-                        let max_size = 1000; // Reducimos un pelín para optimizar el storage local
+                        let max_size = 1000; 
                         let width = img.width;
                         let height = img.height;
 
@@ -522,7 +527,6 @@
             let tx = db.transaction(["viajes", "gastos"], "readwrite");
             tx.objectStore("viajes").delete(id);
             
-            // Borrar gastos en cascada
             let index = tx.objectStore("gastos").index("viaje_id");
             index.openCursor(IDBKeyRange.only(id)).onsuccess = function(e) {
                 let cursor = e.target.result;
@@ -640,6 +644,10 @@
             };
         }
 
+        document.addEventListener("DOMContentLoaded", () => {
+            // Manejador secundario por seguridad
+        });
+
         function importarCopiaSeguridad() {
             let input = document.createElement('input');
             input.type = 'file';
@@ -651,7 +659,6 @@
                     let datos = JSON.parse(evt.target.result);
                     if(datos.viajes && datos.gastos) {
                         let tx = db.transaction(["viajes", "gastos"], "readwrite");
-                        // Limpiar base de datos actual para evitar duplicados
                         tx.objectStore("viajes").clear();
                         tx.objectStore("gastos").clear();
                         
