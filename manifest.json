@@ -1,0 +1,16 @@
+{
+  "name": "Gestor de Gastos Binotto",
+  "short_name": "Gastos Binotto",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme-color": "#2e7d32",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2344/2344132.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
