@@ -19,16 +19,13 @@
         .btn-danger:active { background: #b71c1c; }
         .btn-secondary { background: #757575; }
         .btn-secondary:active { background: #616161; }
-        .ticket { width: 100%; margin-top: 10px; border-radius: 8px; max-height: 300px; object-fit: contain; background: #eee; }
         .oculto { display: none; }
         table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 15px; margin-bottom: 15px; }
         th, td { border: 1px solid #bbb; padding: 8px; font-size: 14px; }
         th { background: #efefef; }
         .firmas { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; font-size: 12px; color: #555; }
         .firmas div { flex: 1; }
-        .informe-tickets { margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; }
-        .ticket-anexo { text-align: center; margin-bottom: 30px; page-break-inside: avoid; }
-        .ticket-anexo img { max-width: 100%; max-height: 450px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px; }
+        .descarga-aviso { color: #555; font-size: 12px; margin-top: -5px; margin-bottom: 10px; display: block; }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
@@ -188,9 +185,9 @@
                         <b style="color:#2e7d32; font-size:16px;">${parseFloat(g.importe).toFixed(2)} €</b>
                     </div>
                     <small style="color:#555;">Método: ${g.pago}</small>
+                    ${g.archivo_foto ? `<br><small style="color:#1565c0;">💾 Archivo descargado: <b>${g.archivo_foto}</b></small>` : ''}
                     ${g.km ? `<br><small><b>KM Repostaje:</b> ${g.km} km</small>` : ''}
                     ${g.observaciones ? `<p style="margin:5px 0; background:#f0f0f0; padding:5px; border-radius:4px;">${g.observaciones}</p>` : ''}
-                    ${g.foto ? `<img class="ticket" src="${g.foto}">` : ''}
                     <div class="botones" style="margin-top:10px;">
                         <button class="btn-secondary" onclick="editarGastoForm(${g.id},${id})">Editar</button>
                         <button class="btn-danger" onclick="borrarGasto(${g.id},${id})">Borrar</button>
@@ -206,7 +203,7 @@
             if(!viaje) viaje = { nombre: "Ruta", inicio: "", fin: "", km: 0 };
             let conceptos = ["GAS", "SOLRED", "HOTEL", "RESTAURACION", "TAXI", "COCHE", "VUELOS", "PARKING", "OTROS"];
             
-            let filas = ""; let totalTarjeta = 0; let totalMetalico = 0; let htmlTickets = ""; let categoriesTotales = {};
+            let filas = ""; let totalTarjeta = 0; let totalMetalico = 0; let categoriesTotales = {};
             gastos.forEach(g => { categoriesTotales[g.concepto] = (categoriesTotales[g.concepto] || 0) + parseFloat(g.importe); });
 
             conceptos.forEach(c => {
@@ -225,29 +222,39 @@
             });
 
             let sumaTotalesColumnas = totalMetalico + totalTarjeta;
-            gastos.forEach(g => {
-                if (g.foto) { 
-                    htmlTickets += `<div class="ticket-anexo"><p style="margin:5px 0; font-weight:bold;">Ticket: ${g.concepto} - ${g.fecha} - ${parseFloat(g.importe).toFixed(2)}€</p><img src="${g.foto}"></div>`;
-                }
-            });
-
             let kmHTML = "";
             let repostajes = gastos.filter(g => (g.concepto == "GAS" || g.concepto == "SOLRED") && g.km);
             repostajes.forEach((g, i) => { kmHTML += `<p style="margin:4px 0;">Repostaje ${i + 1} (${g.fecha}): <b>${g.km} km</b></p>`; });
+
+            let filasDesglose = "";
+            gastos.forEach(g => {
+                filasDesglose += `<tr><td>${g.fecha}</td><td>${g.concepto}</td><td>${g.archivo_foto || 'Sin foto'}</td><td>${g.pago}</td><td>${parseFloat(g.importe).toFixed(2)}€</td></tr>`;
+            });
 
             app.innerHTML = `
             <div class="card">
                 <div class="botones no-print"><button class="btn-secondary" onclick="abrirViaje(${id})">← Volver</button><button onclick="window.print()" style="background:#e65100;">🖨️ Imprimir / PDF</button></div>
                 <h1 style="text-align:center; font-size:20px;">INFORME DE GASTOS</h1>
                 <p><b>Viaje:</b> ${viaje.nombre} | <b>Periodo:</b> ${viaje.inicio} - ${viaje.fin}</p>
+                
+                <h3>Resumen por Categorías</h3>
                 <table>
                     <tr><th>Concepto</th><th>Metálico</th><th>Tarjeta</th><th>Total</th></tr>
                     ${filas ? filas : '<tr><td colspan="4">No hay gastos</td></tr>'}
                     <tr style="background:#c8e6c9;"><th>TOTALES</th><th>${totalMetalico.toFixed(2)}€</th><th>${totalTarjeta.toFixed(2)}€</th><th>${sumaTotalesColumnas.toFixed(2)}€</th></tr>
                 </table>
+                
                 <h3>Kilometraje</h3><p><b>KM inicio viaje:</b> ${viaje.km} km</p>${kmHTML}
+                
+                <div class="salto-pagina">
+                    <h3>Referencia de Archivos / Tickets</h3>
+                    <table>
+                        <tr><th>Fecha</th><th>Concepto</th><th>Nombre de Archivo Descargado</th><th>Pago</th><th>Importe</th></tr>
+                        ${filasDesglose ? filasDesglose : '<tr><td colspan="5">No hay registros</td></tr>'}
+                    </table>
+                </div>
+
                 <div class="firmas"><div>COMERCIAL<br><br>__________</div><div>ADMINISTRACIÓN<br><br>__________</div></div>
-                ${htmlTickets ? `<div class="informe-tickets salto-pagina"><h2 style="text-align:center;">ANEXO TICKETS</h2>${htmlTickets}</div>` : ''}
             </div>`;
         }
 
@@ -292,8 +299,9 @@
                 <label>Importe (€)</label><input type="number" step="0.01" id="importe">
                 <div id="kmzona" class="oculto"><label>KM actuales del coche</label><input type="number" id="g_km"></div>
                 <label>Observaciones</label><input id="obs">
-                <label>Adjuntar Ticket (Cámara o Galería)</label>
-                <input type="file" id="foto" accept="image/*">
+                <label>Hacer foto del Ticket</label>
+                <input type="file" id="foto" accept="image/*" capture="environment">
+                <small class="descarga-aviso">Al guardar, el ticket se guardará directamente en tu carpeta de Descargas.</small>
                 <button onclick="dispararGuardado(${viajeId})">Guardar Gasto</button>
             </div>`;
             controlKM();
@@ -304,30 +312,29 @@
             document.getElementById('kmzona').className = (concepto == "GAS" || concepto == "SOLRED") ? "" : "oculto";
         }
 
-        // --- SISTEMA DIRECTO ASÍNCRONO SIN PROCESADOR GRÁFICO (EVITA EL CUELO DE BOTELLA) ---
         async function dispararGuardado(viajeId) {
             let importeVal = document.getElementById('importe').value;
             if(!importeVal || parseFloat(importeVal) <= 0) return alert("Pon un importe válido");
 
+            let fecha = document.getElementById('fecha').value;
+            let concepto = document.getElementById('concepto').value;
             let fotoInput = document.getElementById('foto');
-            let fotoBase64 = null;
+            let nombreArchivoGenerado = null;
 
             if (fotoInput.files && fotoInput.files[0]) {
-                app.innerHTML = `<div class="card" style="text-align:center;"><h2>⚙️ Guardando gasto...</h2><p>Almacenando ticket en la base de datos...</p></div>`;
-                
-                // Lee el archivo directamente a texto sin renderizarlo en la RAM. Esto es inmediato y no se traba.
-                fotoBase64 = await leerArchivoDirecto(fotoInput.files[0]);
+                nombreArchivoGenerado = `Gasto_${concepto}_${fecha}_${parseFloat(importeVal).toFixed(2)}E.jpg`;
+                descargarArchivoDirecto(fotoInput.files[0], nombreArchivoGenerado);
             }
 
             let nuevoGastoObj = {
                 viaje_id: viajeId,
-                fecha: document.getElementById('fecha').value,
-                concepto: document.getElementById('concepto').value,
+                fecha: fecha,
+                concepto: concepto,
                 pago: document.getElementById('pago').value,
                 importe: parseFloat(importeVal),
                 km: document.getElementById('g_km').value ? parseInt(document.getElementById('g_km').value) : null,
                 observaciones: document.getElementById('obs').value,
-                foto: fotoBase64
+                archivo_foto: nombreArchivoGenerado
             };
 
             if(db) {
@@ -337,13 +344,15 @@
             }
         }
 
-        function leerArchivoDirecto(file) {
-            return new Promise((resolve) => {
-                let reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = () => resolve(null);
-            });
+        function descargarArchivoDirecto(file, nombre) {
+            let url = URL.createObjectURL(file);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = nombre;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         async function editarViaje(id) {
